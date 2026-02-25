@@ -35,7 +35,7 @@ class WereadBookShelf():
     OUTPUT_FILE_PATH: str = "%s/微信读书书架-%s.md"
     BOOK_GROUP_INFO: str = "- **%s**\n"
     BOOK_INFO: str = "    - **《{title}》**\n" \
-        + "        - 封面：![{title}]({cover})\n" \
+        + "        - 封面：![{title}|100]({cover})\n" \
         + "        - 作者：{author}\n" \
         + "        - 分类：{category}\n" \
         + "        - 出版日期：{publishTime}\n"
