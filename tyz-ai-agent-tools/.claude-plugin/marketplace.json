@@ -1,0 +1,15 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "tyz-ai-agent-tools",
+  "version": "0.1.0",
+  "description": "TYZ AI Agent tools marketplace",
+  "owner": {
+    "name": "wubaohui1"
+  },
+  "plugins": [
+    {
+      "name": "bgi",
+      "source": "./bgi"
+    }
+  ]
+}
