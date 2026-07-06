@@ -1,0 +1,12 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "bgi-tools",
+  "version": "1.0.0",
+  "description": "BGI 相关工具",
+  "author": {
+    "name": "tyfanchz"
+  },
+  "skills": [
+    "./skills/"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ai-agent",
+  "version": "0.1.0",
+  "description": "tyfanchz AI Agent marketplace",
+  "owner": {
+    "name": "tyfanchz"
+  },
+  "plugins": [
+    {
+      "name": "bgi-tools",
+      "source": "./bgi-tools"
+    }
+  ]
+}
