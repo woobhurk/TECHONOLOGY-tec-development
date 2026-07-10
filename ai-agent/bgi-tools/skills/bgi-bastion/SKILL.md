@@ -1,6 +1,6 @@
 ---
 name: bgi-bastion
-description: Use when the user wants to execute commands on internal BGI servers accessible only through the bastion host (uomc-worker01.genomics.cn). Handles the interactive 4-step bastion login (node selection, account type, credentials) and returns clean output. Trigger for any task involving: executing commands on sap-uat/10.224.26.7, connecting to internal servers, bastion login, querying/counting errors in service logs, checking service status, viewing files on internal nodes, or any reference to /stomics/app/ paths or 10.224.x.x addresses — including when phrased in Chinese (堡垒机, 查日志, 统计异常, 内网服务器). Use this even when the user doesn't explicitly say 'bastion' — if the task needs internal BGI infrastructure access, this skill is the way in.
+description: Use when the user wants to execute commands on internal BGI servers accessible only through the bastion host (uomc-worker01.genomics.cn). Handles the interactive 4-step bastion login (node selection, account type, credentials) and returns clean output. Trigger for any task involving - executing commands on sap-uat/10.224.26.7, connecting to internal servers, bastion login, querying/counting errors in service logs, checking service status, viewing files on internal nodes, or any reference to /stomics/app/ paths or 10.224.x.x addresses — including when phrased in Chinese (堡垒机, 查日志, 统计异常, 内网服务器). Use this even when the user doesn't explicitly say 'bastion' — if the task needs internal BGI infrastructure access, this skill is the way in.
 ---
 
 # 堡垒机命令执行
