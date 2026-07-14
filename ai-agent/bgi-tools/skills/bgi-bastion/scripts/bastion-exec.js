@@ -6,14 +6,16 @@
  * 使用 ~/.ssh/config 中配置的认证信息自动连接。
  *
  * 用法:
- *   node bastion-exec.js <命令>           在默认目标节点执行命令
- *   node bastion-exec.js --node 10.224.26.7 <命令>
- *   node bastion-exec.js --node 10.224.26.7 --user STOmics_test --password 'xxx' <命令>
+ *   node bastion-exec.js '--' <命令>                    在默认目标节点执行命令
+ *   node bastion-exec.js --node 10.224.26.7 '--' <命令>
+ *   node bastion-exec.js --node 10.224.26.7 --user STOmics_test --password 'xxx' '--' <命令>
+ *
+ * 用 '--' 分隔脚本选项与服务器命令（单引号在 bash/pwsh 中均有效），之后参数不再做选项解析。
  *
  * 示例:
- *   node bastion-exec.js hostname
- *   node bastion-exec.js "ls -la /data"
- *   node bastion-exec.js --node 10.224.26.7 --user root df -h
+ *   node bastion-exec.js '--' hostname
+ *   node bastion-exec.js '--' "ls -la /data"
+ *   node bastion-exec.js --node 10.224.26.7 --user root '--' df -h
  */
 
 const { Client } = require('ssh2');
@@ -88,28 +90,33 @@ function parseArgs() {
     command: null,
   };
 
+  // -- 分隔符：左侧为脚本选项，右侧为服务器命令（不做选项解析）
+  const sepIdx = args.indexOf('--');
+  const optionArgs = sepIdx !== -1 ? args.slice(0, sepIdx) : args;
+  const commandArgs = sepIdx !== -1 ? args.slice(sepIdx + 1) : [];
+
   let i = 0;
-  while (i < args.length) {
-    switch (args[i]) {
+  while (i < optionArgs.length) {
+    switch (optionArgs[i]) {
       case '--node':
       case '-n':
-        opts.node = args[++i];
+        opts.node = optionArgs[++i];
         break;
       case '--account-type':
       case '-t':
-        opts.accountType = args[++i];
+        opts.accountType = optionArgs[++i];
         break;
       case '--user':
       case '-u':
-        opts.username = args[++i];
+        opts.username = optionArgs[++i];
         break;
       case '--password':
       case '-p':
-        opts.password = args[++i];
+        opts.password = optionArgs[++i];
         break;
       case '--bastion':
       case '-b':
-        opts.bastion = args[++i];
+        opts.bastion = optionArgs[++i];
         break;
       case '--help':
       case '-h':
@@ -117,14 +124,15 @@ function parseArgs() {
         process.exit(0);
         break;
       default:
-        if (!opts.command) {
-          opts.command = args[i];
-        } else {
-          opts.command += ' ' + args[i];
-        }
-        break;
+        console.error(`错误: 未知参数 "${optionArgs[i]}"，请使用 -- 分隔脚本选项与服务器命令`);
+        process.exit(1);
     }
     i++;
+  }
+
+  // -- 之后的参数全部归为命令，不做选项解析
+  if (commandArgs.length > 0) {
+    opts.command = commandArgs.join(' ');
   }
 
   return opts;
@@ -132,7 +140,7 @@ function parseArgs() {
 
 function printUsage() {
   console.log(`
-用法: node bastion-exec.js [选项] <命令>
+用法: node bastion-exec.js [选项] '--' <命令>
 
 选项:
   -n, --node <IP>        目标节点 IP（默认: ${DEFAULTS.targetNode}）
@@ -141,11 +149,12 @@ function printUsage() {
   -p, --password <密码>  目标节点密码
   -b, --bastion <别名>   堡垒机 SSH config Host（默认: ${DEFAULTS.bastionHost}）
   -h, --help             显示此帮助
+  '--'                   分隔脚本选项与服务器命令（PowerShell 必须单引号）
 
 示例:
-  node bastion-exec.js hostname
-  node bastion-exec.js "ls -la /data"
-  node bastion-exec.js -n 10.224.26.7 -u root df -h
+  node bastion-exec.js '--' hostname
+  node bastion-exec.js '--' "ls -la /data"
+  node bastion-exec.js -n 10.224.26.7 -u root '--' df -h
 `);
 }
 
@@ -154,8 +163,8 @@ async function main() {
   const opts = parseArgs();
 
   if (!opts.command) {
-    console.error('错误: 请指定要执行的命令');
-    console.error('用法: node bastion-exec.js <命令>');
+    console.error('错误: 请使用 -- 分隔符指定要执行的命令');
+    console.error('用法: node bastion-exec.js [选项] -- <命令>');
     console.error('使用 --help 查看详细帮助');
     process.exit(1);
   }
