@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>行程地图</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./styles.css?v=trip-map-v10">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1 id="tripTitle">行程地图</h1>
+      <span id="tripSubtitle"></span>
+      <span class="header-source">路线矩阵已预载 · 页面只加载地图瓦片</span>
+    </header>
+
+    <div id="map"></div>
+
+    <aside id="planner">
+      <div class="planner-title">
+        <div>
+          <strong>选择地点 · 拖动排序</strong>
+          <span id="orderMode">推荐顺序</span>
+        </div>
+        <button id="plannerToggle" type="button">收起</button>
+      </div>
+      <div id="routeChoice" class="route-choice" hidden>
+        <label for="routePresetSelect">一键选择路线</label>
+        <select id="routePresetSelect"></select>
+        <div id="routePresetInfo"></div>
+      </div>
+      <p class="hint" id="plannerHint">点选地点后拖动行程卡片自由排序；也可随时恢复系统推荐顺序。</p>
+      <div id="chips"></div>
+      <div class="planner-actions">
+        <button id="recommendedBtn" class="primary" type="button">推荐顺序</button>
+        <button id="shortestBtn" class="optimize" type="button" title="按已选景点的预载道路距离计算最短顺序">最短路径</button>
+        <button id="matrixBtn" type="button">路程矩阵</button>
+        <button id="highlightsBtn" type="button">沿途看点</button>
+        <button id="fitBtn" type="button">显示完整路线</button>
+        <button id="fullscreenBtn" type="button">全屏</button>
+      </div>
+      <div id="legs"></div>
+      <div id="total"></div>
+      <div class="export-actions">
+        <button id="imageExportBtn" type="button">导出图片</button>
+        <button id="pdfExportBtn" type="button">导出 PDF</button>
+      </div>
+      <div id="exportStatus" role="status" aria-live="polite"></div>
+    </aside>
+
+    <aside id="detail" hidden>
+      <button id="detailClose" type="button" aria-label="关闭">×</button>
+      <div class="detail-duration" id="detailDuration"></div>
+      <h2 id="detailName"></h2>
+      <h3>景点介绍</h3>
+      <p id="detailDescription"></p>
+      <h3>注意事项</h3>
+      <ul id="detailPrecautions"></ul>
+      <p id="detailStay"></p>
+      <div id="detailSources"></div>
+    </aside>
+
+    <div id="matrixDialog" class="dialog" hidden>
+      <div class="dialog-card">
+        <div class="dialog-head">
+          <div>
+            <strong>所有地点之间的预载路程 / 时间</strong>
+            <span>OSRM 参考值，不含实时拥堵和临时管制</span>
+          </div>
+          <button id="matrixClose" type="button">关闭</button>
+        </div>
+        <div id="matrixTable" class="matrix-wrap"></div>
+      </div>
+    </div>
+
+    <div id="highlightsDialog" class="dialog" hidden>
+      <div class="dialog-card">
+        <div class="dialog-head">
+          <div>
+            <strong>沿途看点与道路说明</strong>
+            <span id="highlightsOverview">只在正规服务区、停车区或明确开放的观景点停靠</span>
+          </div>
+          <button id="highlightsClose" type="button">关闭</button>
+        </div>
+        <div id="highlightsList" class="highlights-list"></div>
+      </div>
+    </div>
+
+    <div id="hoverTip"></div>
+
+    <section id="profileWrap">
+      <div class="profile-head">
+        <span id="profileInfo">海拔剖面</span>
+        <div class="profile-head-actions">
+          <span id="profileMeta"></span>
+          <button id="profileToggle" type="button" aria-expanded="true">收起</button>
+        </div>
+      </div>
+      <canvas id="profile"></canvas>
+    </section>
+  </div>
+
+  <script>window.TRIP_DATA = __TRIP_DATA__;</script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./app.js?v=trip-map-v10"></script>
+</body>
+</html>

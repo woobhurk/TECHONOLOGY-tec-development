@@ -1,0 +1,4 @@
+interface:
+  display_name: "行程地图生成器"
+  short_description: "比较路线方案与逐段风景，预载路线海拔并生成可切换地图"
+  default_prompt: "Use $generate-trip-map to plan researched fixed-endpoint route alternatives, enforce featured must-visit waypoints, document every preset leg's scenery and road advice with sources, precompute all driving routes and elevation, and generate a switchable, draggable static map with safe-stop guidance and PNG/PDF export."

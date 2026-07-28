@@ -6,22 +6,25 @@
  * 使用 ~/.ssh/config 中配置的认证信息自动连接。
  *
  * 用法:
- *   node bastion-exec.js '--' <命令>                    在默认目标节点执行命令
- *   node bastion-exec.js --node 10.224.26.7 '--' <命令>
- *   node bastion-exec.js --node 10.224.26.7 --user STOmics_test --password 'xxx' '--' <命令>
+ *   node bastion-exec.js -c <命令>                        在默认目标节点执行命令（推荐，三 shell 通用）
+ *   node bastion-exec.js -n 10.224.26.7 -c <命令>
+ *   node bastion-exec.js -n 10.224.26.7 -u root -c "df -h"
  *
- * 用 '--' 分隔脚本选项与服务器命令（单引号在 bash/pwsh 中均有效），之后参数不再做选项解析。
+ * 用 -c 指定命令（双引号包裹含特殊字符的命令），三 shell 通用，无需关心引号差异。
+ * 也支持 -- 分隔符（向后兼容）：node bastion-exec.js [选项] -- <命令>
  *
  * 示例:
- *   node bastion-exec.js '--' hostname
- *   node bastion-exec.js '--' "ls -la /data"
- *   node bastion-exec.js --node 10.224.26.7 --user root '--' df -h
+ *   node bastion-exec.js -c hostname
+ *   node bastion-exec.js -c "ls -la /data"
+ *   node bastion-exec.js -n 10.224.26.7 -u root -c "df -h"
  */
 
 const { Client } = require('ssh2');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+// 切换到技能根目录，确保从任意工作目录执行都能正确解析 node_modules
+process.chdir(path.join(__dirname, '..'));
 
 // ─── 默认登录参数 ────────────────────────────────────────────────
 const DEFAULTS = {
@@ -90,8 +93,13 @@ function parseArgs() {
     command: null,
   };
 
-  // -- 分隔符：左侧为脚本选项，右侧为服务器命令（不做选项解析）
-  const sepIdx = args.indexOf('--');
+  // 分隔符：-c / --command / --，取最先出现的。其后所有参数 join 为命令。
+  // -c 做分隔符而非单值选项：即使引号失效命令被拆成多个参数，join 后仍能还原完整命令。
+  let sepIdx = -1;
+  for (const sep of ['-c', '--command', '--']) {
+    const idx = args.indexOf(sep);
+    if (idx !== -1 && (sepIdx === -1 || idx < sepIdx)) sepIdx = idx;
+  }
   const optionArgs = sepIdx !== -1 ? args.slice(0, sepIdx) : args;
   const commandArgs = sepIdx !== -1 ? args.slice(sepIdx + 1) : [];
 
@@ -124,13 +132,13 @@ function parseArgs() {
         process.exit(0);
         break;
       default:
-        console.error(`错误: 未知参数 "${optionArgs[i]}"，请使用 -- 分隔脚本选项与服务器命令`);
+        console.error(`错误: 未知参数 "${optionArgs[i]}"，请使用 -c <命令> 或 -- <命令>`);
         process.exit(1);
     }
     i++;
   }
 
-  // -- 之后的参数全部归为命令，不做选项解析
+  // 分隔符之后的参数全部归为命令
   if (commandArgs.length > 0) {
     opts.command = commandArgs.join(' ');
   }
@@ -140,21 +148,22 @@ function parseArgs() {
 
 function printUsage() {
   console.log(`
-用法: node bastion-exec.js [选项] '--' <命令>
+用法: node bastion-exec.js [选项] -c <命令>
+      node bastion-exec.js [选项] -- <命令>    (向后兼容)
 
 选项:
+  -c, --command <命令>   要在远程服务器执行的命令（推荐，三 shell 通用）
   -n, --node <IP>        目标节点 IP（默认: ${DEFAULTS.targetNode}）
   -t, --account-type <n> 账号类型: 1=any, 2=self（默认: ${DEFAULTS.accountType}）
   -u, --user <用户名>    目标节点用户名（默认: ${DEFAULTS.username}）
   -p, --password <密码>  目标节点密码
   -b, --bastion <别名>   堡垒机 SSH config Host（默认: ${DEFAULTS.bastionHost}）
   -h, --help             显示此帮助
-  '--'                   分隔脚本选项与服务器命令（PowerShell 必须单引号）
 
 示例:
-  node bastion-exec.js '--' hostname
-  node bastion-exec.js '--' "ls -la /data"
-  node bastion-exec.js -n 10.224.26.7 -u root '--' df -h
+  node bastion-exec.js -c hostname
+  node bastion-exec.js -c "ls -la /data"
+  node bastion-exec.js -n 10.224.26.7 -u root -c "df -h"
 `);
 }
 
@@ -163,8 +172,8 @@ async function main() {
   const opts = parseArgs();
 
   if (!opts.command) {
-    console.error('错误: 请使用 -- 分隔符指定要执行的命令');
-    console.error('用法: node bastion-exec.js [选项] -- <命令>');
+    console.error('错误: 请使用 -c <命令> 指定要执行的命令');
+    console.error('用法: node bastion-exec.js [选项] -c <命令>');
     console.error('使用 --help 查看详细帮助');
     process.exit(1);
   }

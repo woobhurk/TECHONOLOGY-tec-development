@@ -19,6 +19,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const readline = require('readline');
+// 切换到技能根目录，确保从任意工作目录执行都能正确解析 node_modules
+process.chdir(path.join(__dirname, '..'));
 
 // ─── 默认登录参数（与 bastion-exec.js 一致）─────────────────────
 const DEFAULTS = {
