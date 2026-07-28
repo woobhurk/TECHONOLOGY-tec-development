@@ -1,5 +1,5 @@
 ---
-name: generate-trip-map
+name: trip-map
 description: Generate a researched interactive travel-planning map from candidate cities, scenic spots, campsites, coordinates, or a supplied start and end point. Use when Codex needs to research attractions and road-corridor highlights, compare named route alternatives, enforce must-visit waypoints, plan a fixed-endpoint path, or turn pasted places into a portable static website where the user switches route presets, selects destinations, restores a recommended order or drag-reorders intermediate stops, reads stop and per-leg scenery/road descriptions, and exports PNG or PDF using a fully pre-collected driving matrix, default synchronized elevation, cautions, sources, and no runtime data collection.
 ---
 
