@@ -1,0 +1,12 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "life-tools",
+  "version": "1.0.0",
+  "description": "生活相关工具",
+  "author": {
+    "name": "tyfanchz"
+  },
+  "skills": [
+    "./skills/"
+  ]
+}
