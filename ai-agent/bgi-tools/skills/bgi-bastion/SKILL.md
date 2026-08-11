@@ -89,20 +89,43 @@ node scripts/bastion-exec.js -c id
 
 ## 服务日志排查
 
+### 系统与环境选择（强制）
+
+执行任何日志命令前，先确定**系统**和**环境**两个维度：
+
+| 用户表述 | 只能使用的系统路径前缀 |
+|---|---|
+| 云平台（STOmics 云平台、stomics-cloud 等） | `/stomics/app/stomics-cloud-backend/` |
+| 病理云（DCS Path、dcs-path 等） | `/stomics/app/dcs-path/` |
+
+1. 先解析系统和环境。用户提供的完整路径可以用于确认这两个维度，但必须核对路径前缀与文字描述一致。
+2. 用户明确指定系统和环境时，只使用对应路径；不要用另一系统的示例命令、默认环境或上一次排查的路径。
+3. 系统或环境仍未确定时，先询问再执行；不要把示例文件或默认值当作推断结果。
+4. 系统名称与路径前缀冲突时，停止并指出冲突；不要静默切换系统。
+5. 用户要求同时查询两个系统时，拆成两组独立命令和结果；每组命令只能出现本系统路径前缀。
+6. 默认先查 `10.224.26.7`。目标路径不存在时报告路径不存在并停止，不要用另一系统路径代替，也不要因文件名中的 IP 自动切换 `-n` 节点。
+
+### 执行前核对
+
+在首次 `grep`/`zcat` 前，先只对已选系统和环境执行 `ls` 或目录存在性检查，并确认当天实际文件列表。向用户报告查询范围时明确写出 `系统`、`环境`、`节点` 和 `目录/文件模式`；路径检查失败时停留在当前系统和环境，不改查另一系统的路径。
+
 ### 日志位置与命名
 
-日志统一存放在默认节点 `10.224.26.7` 上，路径按环境区分：
+日志默认存放在节点 `10.224.26.7` 上，按系统和环境区分；实际查询以目标路径存在性检查为准：
 
-| 环境 | 日志目录 |
-|------|---------|
-| 测试 | `/stomics/app/stomics-cloud-backend/test/logs/` |
-| 生产 | `/stomics/app/stomics-cloud-backend/prd/logs/` |
+| 系统 | 测试环境日志路径 | 生产环境日志路径 |
+|------|------------------|------------------|
+| 云平台 | `/stomics/app/stomics-cloud-backend/test/logs/` | `/stomics/app/stomics-cloud-backend/prd/logs/` |
+| 病理云 | `/stomics/app/dcs-path/test/logs/`（示例文件：`/stomics/app/dcs-path/test/logs/dcs-path-backend-20260810-10.224.28.5.log`） | `/stomics/app/dcs-path/prod/logs/` |
+
+病理云测试路径中的文件名仅为示例。查询当天日志时，匹配该目录下所有对应日期的 `.log`/`.err` 文件，例如 `dcs-path-backend-<YYYYMMDD>-*.log`；不要只读取示例中的 `10.224.28.5` 文件。
+云平台生产路径使用 `prd`，病理云生产路径使用 `prod`，不要互相替换。
 
 文件命名格式：`<服务名>-<YYYYMMDD>-<IP>.<类别>[.gz]`
 
 | 组成 | 说明 | 示例 |
 |------|------|------|
-| 服务名 | 微服务模块名 | `dcs-cloud-billing-service` |
+| 服务名 | 微服务模块名 | 云平台：`dcs-cloud-billing-service`；病理云：`dcs-path-backend` |
 | 日期 | 8 位日期 | `20260705` |
 | IP | 服务运行节点 IP（仅标识来源，非日志存储位置） | `10.224.28.111` |
 | 类别 | `.log`（业务日志）或 `.err`（错误日志） | `.log` |
@@ -110,25 +133,42 @@ node scripts/bastion-exec.js -c id
 
 ### 关键注意事项
 
-1. **日志都在默认节点**：文件名中的 IP 是服务运行节点，不是日志存储节点。所有日志统一在默认节点 `10.224.26.7` 上，无需切换 `-n` 节点。
+1. **日志节点与系统路径分开判断**：文件名中的 IP 是服务运行节点，不是日志存储节点。默认先在 `10.224.26.7` 上查目标系统路径；路径不存在时报告并停止，不用另一系统路径替代。
 2. **当天 vs 非当天**：当天日志为未压缩 `.log`，历史日志为 `.log.gz` 压缩格式。查找历史日志时需用 `zcat`/`zgrep` 处理压缩文件。
-3. **只查 .log**：日志分为 `.log`（业务日志）和 `.err`（错误日志）两类，一般只查找 `.log`。
+3. **按排查目的选择日志类型**：普通业务统计可先查 `.log`；涉及失败、异常、堆栈或接口返回码时，必须同时检索同日期 `.log` 和 `.err`。
 4. **大文件性能**：压缩日志可达数百 MB（解压后数 GB），避免对同一文件多次读取（如同时跑 `zgrep` 和 `zcat|grep`），单遍 `zcat | grep -c` 即可。
 
 ### 常用命令示例
 
+命令示例按系统标注。执行前只替换同一系统的日期、服务名和文件名；先确认命令中的路径前缀与目标系统一致。
+
+#### 云平台
+
 ```bash
-# 统计当天（未压缩）日志的 Exception 数量（无特殊字符，无需引号）
+# 测试环境：统计当天（未压缩）日志的 Exception 数量
 node scripts/bastion-exec.js -c grep -ci Exception /stomics/app/stomics-cloud-backend/test/logs/dcs-cloud-billing-service-20260706-10.224.28.111.log
 
-# 统计历史（压缩）日志的 Exception 数量（含管道和通配符，需引号）
+# 测试环境：统计历史（压缩）日志的 Exception 数量
 node scripts/bastion-exec.js -c "zcat /stomics/app/stomics-cloud-backend/test/logs/dcs-cloud-billing-service-20260705*.log.gz | grep -ci Exception"
 
-# 列出某天的所有日志文件（含通配符，需引号）
+# 测试环境：列出某天的所有日志文件
 node scripts/bastion-exec.js -c "ls -la /stomics/app/stomics-cloud-backend/test/logs/dcs-cloud-billing-service-20260705*"
 
-# 同时覆盖 .log 和 .log.gz（含管道、分号、通配符，需引号）
-node scripts/bastion-exec.js -c "{ cat /stomics/app/stomics-cloud-backend/test/logs/dcs-cloud-billing-service-20260705*.log 2>/dev/null; zcat /stomics/app/stomics-cloud-backend/test/logs/dcs-cloud-billing-service-20260705*.log.gz 2>/dev/null; } | grep -ci Exception"
+# 生产环境：先列出实际日志文件
+node scripts/bastion-exec.js -c "ls -la /stomics/app/stomics-cloud-backend/prd/logs/"
+```
+
+#### 病理云
+
+```bash
+# 测试环境：列出当天目录内所有后端日志；20260810 仅为日期示例
+node scripts/bastion-exec.js -c "ls -la /stomics/app/dcs-path/test/logs/dcs-path-backend-20260810-*"
+
+# 测试环境：查询当天后端日志中的删除/失败信息；示例文件不是当天唯一日志
+node scripts/bastion-exec.js -c "grep -HniE '删除|失败|deleteTasks' /stomics/app/dcs-path/test/logs/dcs-path-backend-20260810-*.log /stomics/app/dcs-path/test/logs/dcs-path-backend-20260810-*.err 2>/dev/null"
+
+# 生产环境：先确认目录中的实际文件，再按实际文件名检索
+node scripts/bastion-exec.js -c "ls -la /stomics/app/dcs-path/prod/logs/"
 ```
 
 ## 交互式长连接模式 (bastion-repl.js)
