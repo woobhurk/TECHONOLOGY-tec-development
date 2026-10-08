@@ -11,8 +11,8 @@
 .PARAMETER Force
     覆盖已存在的同名链接或目录。
 .EXAMPLE
-    .\create-tem-links.ps1 -Src "D:\Projects" -Target "D:\LinkedProjects"
-    .\create-tem-links.ps1 -Src "D:\Projects" -Target "D:\LinkedProjects" -Force
+    .\create-item-links.ps1 -Src "D:\Projects" -Target "D:\LinkedProjects"
+    .\create-item-links.ps1 -Src "D:\Projects" -Target "D:\LinkedProjects" -Force
 #>
 
 param(
