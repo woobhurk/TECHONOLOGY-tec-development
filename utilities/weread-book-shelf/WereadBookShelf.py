@@ -33,8 +33,8 @@ from typing import *
 """
 class WereadBookShelf():
     OUTPUT_FILE_PATH: str = "%s/微信读书书架-%s.md"
-    BOOK_GROUP_INFO: str = "- **%s**\n"
-    BOOK_INFO: str = "    - **《{title}》**\n" \
+    BOOK_GROUP_INFO: str = "- # %s\n"
+    BOOK_INFO: str = "    - ## 《{title}》\n" \
         + "        - 封面：![{title}|100]({cover})\n" \
         + "        - 作者：{author}\n" \
         + "        - 分类：{category}\n" \
@@ -87,7 +87,6 @@ class WereadBookShelf():
         """将解析的书籍信息写入文件中
         """
         with open(outputFilePath, "wt+", encoding="utf-8") as f:
-            self.__writeFileTitle(outputFilePath, f)
             for bookGroup in bookGroups:
                 self.__writeBookGroupInfo(f, bookGroup)
                 self.__writeBookInfo(f, bookGroup["bookIds"], bookInfoMap)
@@ -143,6 +142,8 @@ class WereadBookShelf():
             }
             content: str = self.BOOK_INFO.format(**contentMap)
             outputFile.write(content)
+        # 多写一个空行，隔开各个一级标题
+        outputFile.write("\n")
 
 if __name__ == "__main__":
     WereadBookShelf().main(sys.argv)
