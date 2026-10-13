@@ -32,7 +32,7 @@ from typing import *
         - 参考：https://www.cnblogs.com/cloudbird/p/12683546.html
 """
 class WereadBookShelf():
-    OUTPUT_FILE_PATH: str = "%s/微信读书书架-%s.md"
+    OUTPUT_FILE_PATH: str = "%s/微信读书书架@%s.md"
     BOOK_GROUP_INFO: str = "- # %s\n"
     BOOK_INFO: str = "    - ## 《{title}》\n" \
         + "        - 封面：![{title}|100]({cover})\n" \
